@@ -1,18 +1,21 @@
 # Seed Of Life Registration
 
-This project is a Baptism registration application for Seed of Life Ministry. It provides a
-mobile-friendly black-and-gold registration experience, collects participant details, and stores
-submissions in an Excel file for now.
+This project is a Baptism registration application for Seed of Life Ministry. It now runs as a
+single Render-hosted Node application that:
+
+- serves the Angular frontend
+- accepts form submissions
+- stores submissions in an Excel file inside the same app
+- generates the QR image and promo banner inside the same app
 
 ## Features
 
 - Fixed campaign: `Registration for - Baptism`
-- Premium mobile-friendly registration form
+- Premium black-and-gold registration form
 - Guided field progression with skip support for optional fields
 - Thank-you screen after successful submission
-- Express backend with Excel logging to `data/registrations.xlsx`
-- GitHub Pages workflow for the Angular frontend
-- Render blueprint for the backend API
+- Excel logging inside the same application
+- Built-in QR image route and banner image route
 
 ## Local run
 
@@ -33,34 +36,25 @@ Backend:
 http://localhost:3000/
 ```
 
-## Deployment
+## Single Render deployment
 
-### GitHub Pages frontend
-
-The repo includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
-
-After enabling GitHub Pages in the repository settings, the workflow deploys the Angular frontend
-to:
+This repo includes `render.yaml` for one web service:
 
 ```text
-https://newtondevarapalli.github.io/seed-of-life-Registration/
+seed-of-life-registration
 ```
 
-### Render backend
+Render will:
 
-The repo includes `render.yaml` for a Render web service named:
+1. install dependencies
+2. build the Angular app
+3. run the Node server
+4. serve both frontend and Excel-writing API from the same domain
 
-```text
-seed-of-life-registration-api
-```
+## Important note about Excel on Render
 
-Expected backend URL:
-
-```text
-https://seed-of-life-registration-api.onrender.com
-```
-
-Update `public/app-config.json` if you use a different Render service URL.
+The Excel file is fine for short-term use, but hosted server files are not a long-term database.
+For production, a database is better.
 
 ## Useful scripts
 
@@ -69,6 +63,6 @@ npm start
 npm run frontend
 npm run backend
 npm run build
-npm run build:pages
+npm run generate:promo-assets
 npm run test
 ```

@@ -150,6 +150,7 @@ h2 {
   z-index: 1;
   display: grid;
   gap: 14px;
+  margin-bottom: 18px;
 }
 
 .hero-point,
@@ -178,6 +179,84 @@ h2 {
 .hero-point strong {
   color: var(--gold-bright);
   font-size: 1.08rem;
+}
+
+.promo-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(220px, 0.85fr);
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid rgba(216, 179, 109, 0.14);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(27, 24, 20, 0.92), rgba(14, 14, 16, 0.96)),
+    var(--panel-soft);
+}
+
+.promo-copy h3 {
+  margin: 0 0 10px;
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-size: 1.8rem;
+  line-height: 1.15;
+}
+
+.promo-copy p {
+  margin: 0 0 16px;
+  color: var(--text-soft);
+  line-height: 1.65;
+}
+
+.promo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(216, 179, 109, 0.2);
+  border-radius: 999px;
+  padding: 11px 16px;
+  color: var(--gold-bright);
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.promo-link:hover {
+  background: rgba(216, 179, 109, 0.08);
+  border-color: rgba(216, 179, 109, 0.34);
+  transform: translateY(-1px);
+}
+
+.promo-visuals {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  justify-items: center;
+}
+
+.promo-qr,
+.promo-banner-preview {
+  display: block;
+  width: 100%;
+  border-radius: 22px;
+  border: 1px solid rgba(216, 179, 109, 0.14);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.promo-qr {
+  max-width: 260px;
+  padding: 12px;
+}
+
+.promo-banner-link {
+  display: block;
+  text-decoration: none;
+}
+
+.promo-banner-preview {
+  max-width: 300px;
 }
 
 .form-panel {
@@ -421,6 +500,10 @@ h2 {
 
   .hero-panel {
     min-height: 520px;
+  }
+
+  .promo-card {
+    grid-template-columns: 1fr;
   }
 }
 

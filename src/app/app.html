@@ -25,6 +25,28 @@
         <strong>Made for mobile users</strong>
       </div>
     </div>
+
+    <div class="promo-card">
+      <div class="promo-copy">
+        <span class="hero-label">Baptism Registration QR</span>
+        <h3>Scan below QR for Baptism Registration</h3>
+        <p>Use this QR on posters, WhatsApp messages, church displays, or event invitations.</p>
+        <a class="promo-link" [href]="bannerImageUrl" target="_blank" rel="noopener">
+          Open Banner Image
+        </a>
+      </div>
+
+      <div class="promo-visuals">
+        <img class="promo-qr" [src]="qrImageUrl" alt="QR code for Baptism registration" />
+        <a class="promo-banner-link" [href]="bannerImageUrl" target="_blank" rel="noopener">
+          <img
+            class="promo-banner-preview"
+            [src]="bannerImageUrl"
+            alt="Banner that says scan below QR for Baptism Registration"
+          />
+        </a>
+      </div>
+    </div>
   </section>
 
   <section class="form-panel">

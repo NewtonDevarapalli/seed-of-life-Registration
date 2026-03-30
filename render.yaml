@@ -1,12 +1,10 @@
 services:
   - type: web
-    name: seed-of-life-registration-api
+    name: seed-of-life-registration
     runtime: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: npm run backend
     envVars:
       - key: NODE_VERSION
         value: 24.13.1
-      - key: CORS_ORIGINS
-        value: https://newtondevarapalli.github.io,http://localhost:4200

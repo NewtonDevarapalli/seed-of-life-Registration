@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { finalize, timeout } from 'rxjs';
-import { appRuntimeConfig } from './app-runtime-config';
 
 type RegistrationFormModel = {
   campaignName: string;
@@ -59,6 +58,8 @@ export class App implements AfterViewInit {
   protected submitSuccess = '';
   protected showThankYou = false;
   protected submittedCampaign = '';
+  protected readonly qrImageUrl = '/promo/qr.png';
+  protected readonly bannerImageUrl = '/promo/banner.png';
 
   protected registration: RegistrationFormModel = this.createEmptyRegistration();
 
@@ -79,7 +80,7 @@ export class App implements AfterViewInit {
     this.isSubmitting = true;
 
     this.http
-      .post<RegistrationResponse>(this.getApiUrl('/api/registrations'), this.registration)
+      .post<RegistrationResponse>('/api/registrations', this.registration)
       .pipe(
         timeout(15000),
         finalize(() => {
@@ -179,15 +180,5 @@ export class App implements AfterViewInit {
       city: '',
       prayerRequest: ''
     };
-  }
-
-  private getApiUrl(path: string): string {
-    const baseUrl = appRuntimeConfig.apiBaseUrl.trim();
-
-    if (!baseUrl) {
-      return path;
-    }
-
-    return `${baseUrl.replace(/\/+$/, '')}${path}`;
   }
 }
