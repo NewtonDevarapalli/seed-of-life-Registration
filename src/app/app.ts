@@ -10,6 +10,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
+import { finalize, timeout } from 'rxjs';
 import { appRuntimeConfig } from './app-runtime-config';
 
 type RegistrationFormModel = {
@@ -79,23 +80,25 @@ export class App implements AfterViewInit {
 
     this.http
       .post<RegistrationResponse>(this.getApiUrl('/api/registrations'), this.registration)
+      .pipe(
+        timeout(15000),
+        finalize(() => {
+          this.isSubmitting = false;
+        })
+      )
       .subscribe({
-      next: () => {
-        this.submittedCampaign = this.registration.campaignName;
-        this.submitSuccess = 'Thank you. Your registration has been received successfully.';
-        this.showThankYou = true;
-        this.registration = this.createEmptyRegistration();
-        form.resetForm(this.registration);
-      },
-      error: () => {
-        this.submitError =
-          'We could not save your registration right now. Please try again in a moment.';
-        this.isSubmitting = false;
-      },
-      complete: () => {
-        this.isSubmitting = false;
-      }
-    });
+        next: () => {
+          this.submittedCampaign = this.registration.campaignName;
+          this.submitSuccess = 'Thank you. Your registration has been received successfully.';
+          this.showThankYou = true;
+          this.registration = this.createEmptyRegistration();
+          form.resetForm(this.registration);
+        },
+        error: () => {
+          this.submitError =
+            'The registration service is not responding right now. Please try again in a moment.';
+        }
+      });
   }
 
   protected registerAnother(): void {
