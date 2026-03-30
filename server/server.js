@@ -158,20 +158,21 @@ app.get('/promo/banner.png', async (request, response) => {
         <circle cx="1290" cy="720" r="180" fill="url(#glow)" />
 
         <text x="110" y="138" fill="#d8b36d" font-family="Georgia, serif" font-size="34" letter-spacing="8">SEED OF LIFE MINISTRY</text>
-        <text x="110" y="250" fill="#f8f3ea" font-family="Georgia, serif" font-size="96" font-weight="700">Scan below QR</text>
-        <text x="110" y="352" fill="#f8f3ea" font-family="Georgia, serif" font-size="96" font-weight="700">for Baptism Registration</text>
+        <text x="110" y="228" fill="#f8f3ea" font-family="Georgia, serif" font-size="72" font-weight="700">Scan the QR code</text>
+        <text x="110" y="318" fill="#f8f3ea" font-family="Georgia, serif" font-size="80" font-weight="700">for Baptism</text>
+        <text x="110" y="410" fill="#f8f3ea" font-family="Georgia, serif" font-size="80" font-weight="700">Registration</text>
 
-        <text x="110" y="450" fill="#b8ab97" font-family="Segoe UI, Arial, sans-serif" font-size="34">
+        <text x="110" y="490" fill="#b8ab97" font-family="Segoe UI, Arial, sans-serif" font-size="32">
           Open the live registration page instantly on mobile.
         </text>
 
-        <rect x="95" y="520" width="610" height="228" rx="30" fill="#171717" fill-opacity="0.95" stroke="#8f7441" stroke-opacity="0.28" />
-        <text x="135" y="592" fill="#d8b36d" font-family="Segoe UI, Arial, sans-serif" font-size="24" letter-spacing="4">LIVE URL</text>
-        <text x="135" y="652" fill="#f6efdf" font-family="Segoe UI, Arial, sans-serif" font-size="30">${escapeXml(siteUrl)}</text>
-        <text x="135" y="710" fill="#aa9c88" font-family="Segoe UI, Arial, sans-serif" font-size="26">Point your phone camera at the QR code to open the page.</text>
+        <rect x="95" y="558" width="760" height="230" rx="30" fill="#171717" fill-opacity="0.95" stroke="#8f7441" stroke-opacity="0.28" />
+        <text x="135" y="628" fill="#d8b36d" font-family="Segoe UI, Arial, sans-serif" font-size="24" letter-spacing="4">LIVE URL</text>
+        <text x="135" y="684" fill="#f6efdf" font-family="Segoe UI, Arial, sans-serif" font-size="24">${escapeXml(siteUrl)}</text>
+        <text x="135" y="740" fill="#aa9c88" font-family="Segoe UI, Arial, sans-serif" font-size="23">Point your phone camera at the QR code to open the page.</text>
 
-        <rect x="1015" y="190" width="470" height="520" rx="40" fill="#141414" fill-opacity="0.96" stroke="#907545" stroke-opacity="0.36" />
-        <text x="1114" y="765" fill="#d8b36d" font-family="Segoe UI, Arial, sans-serif" font-size="28" letter-spacing="3">SCAN NOW</text>
+        <rect x="1035" y="170" width="430" height="530" rx="40" fill="#141414" fill-opacity="0.96" stroke="#907545" stroke-opacity="0.36" />
+        <text x="1142" y="758" fill="#d8b36d" font-family="Segoe UI, Arial, sans-serif" font-size="28" letter-spacing="3">SCAN NOW</text>
       </svg>
     `;
 
