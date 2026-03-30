@@ -1,4 +1,3 @@
-const cors = require('cors');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -12,26 +11,7 @@ const dataDirectory = path.join(__dirname, '..', 'data');
 const workbookPath = path.join(dataDirectory, 'registrations.xlsx');
 const sheetName = 'Registrations';
 const browserDistPath = path.join(__dirname, '..', 'dist', 'seed-of-life-registration', 'browser');
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4200')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
 app.use(express.json());
-
-app.use(
-  '/api',
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error(`Origin ${origin} is not allowed by CORS.`));
-    }
-  })
-);
 
 app.get('/api/health', (_request, response) => {
   response.json({ status: 'ok' });
