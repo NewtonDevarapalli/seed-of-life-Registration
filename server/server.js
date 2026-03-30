@@ -1,3 +1,4 @@
+const cors = require('cors');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -8,7 +9,24 @@ const port = Number(process.env.PORT) || 3000;
 const dataDirectory = path.join(__dirname, '..', 'data');
 const workbookPath = path.join(dataDirectory, 'registrations.xlsx');
 const sheetName = 'Registrations';
+const allowedOrigins = (process.env.CORS_ORIGINS ||
+  'http://localhost:4200,https://newtondevarapalli.github.io')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} is not allowed by CORS.`));
+    }
+  })
+);
 app.use(express.json());
 
 app.get('/api/health', (_request, response) => {

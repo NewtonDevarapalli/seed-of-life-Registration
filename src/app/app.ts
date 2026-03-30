@@ -10,6 +10,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
+import { appRuntimeConfig } from './app-runtime-config';
 
 type RegistrationFormModel = {
   campaignName: string;
@@ -76,7 +77,9 @@ export class App implements AfterViewInit {
 
     this.isSubmitting = true;
 
-    this.http.post<RegistrationResponse>('/api/registrations', this.registration).subscribe({
+    this.http
+      .post<RegistrationResponse>(this.getApiUrl('/api/registrations'), this.registration)
+      .subscribe({
       next: () => {
         this.submittedCampaign = this.registration.campaignName;
         this.submitSuccess = 'Thank you. Your registration has been received successfully.';
@@ -173,5 +176,15 @@ export class App implements AfterViewInit {
       city: '',
       prayerRequest: ''
     };
+  }
+
+  private getApiUrl(path: string): string {
+    const baseUrl = appRuntimeConfig.apiBaseUrl.trim();
+
+    if (!baseUrl) {
+      return path;
+    }
+
+    return `${baseUrl.replace(/\/+$/, '')}${path}`;
   }
 }
