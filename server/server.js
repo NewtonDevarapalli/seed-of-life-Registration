@@ -1,5 +1,6 @@
 const express = require('express');
 const fs = require('fs');
+const { google } = require('googleapis');
 const path = require('path');
 const QRCode = require('qrcode');
 const sharp = require('sharp');
@@ -11,13 +12,31 @@ const dataDirectory = path.join(__dirname, '..', 'data');
 const workbookPath = path.join(dataDirectory, 'registrations.xlsx');
 const sheetName = 'Registrations';
 const browserDistPath = path.join(__dirname, '..', 'dist', 'seed-of-life-registration', 'browser');
+const googleSpreadsheetId = cleanValue(process.env.GOOGLE_SHEETS_SPREADSHEET_ID);
+const googleSheetName = cleanValue(process.env.GOOGLE_SHEETS_SHEET_NAME) || sheetName;
+const googleSheetUrl = googleSpreadsheetId
+  ? `https://docs.google.com/spreadsheets/d/${googleSpreadsheetId}/edit`
+  : '';
+
 app.use(express.json());
 
 app.get('/api/health', (_request, response) => {
-  response.json({ status: 'ok' });
+  response.json({
+    status: 'ok',
+    storageMode: getStorageMode(),
+    sheetUrl: googleSheetUrl || undefined
+  });
 });
 
 app.get('/api/registrations/export', (_request, response) => {
+  if (shouldUseGoogleSheets()) {
+    response.status(400).json({
+      message: 'Registrations are stored in Google Sheets for this deployment.',
+      sheetUrl: googleSheetUrl
+    });
+    return;
+  }
+
   if (!fs.existsSync(workbookPath)) {
     response.status(404).json({
       message: 'No registrations have been exported yet.'
@@ -28,7 +47,7 @@ app.get('/api/registrations/export', (_request, response) => {
   response.download(workbookPath, 'registrations.xlsx');
 });
 
-app.post('/api/registrations', (request, response) => {
+app.post('/api/registrations', async (request, response) => {
   const payload = normalizeRegistration(request.body);
 
   if (!payload.campaignName || !payload.fullName || !payload.phoneNumber || !payload.city) {
@@ -51,26 +70,16 @@ app.post('/api/registrations', (request, response) => {
   };
 
   try {
-    fs.mkdirSync(dataDirectory, { recursive: true });
-
-    const workbook = fs.existsSync(workbookPath) ? XLSX.readFile(workbookPath) : XLSX.utils.book_new();
-    const existingSheet = workbook.Sheets[sheetName];
-    const existingRows = existingSheet ? XLSX.utils.sheet_to_json(existingSheet) : [];
-    const nextRows = [...existingRows, row];
-    const nextSheet = XLSX.utils.json_to_sheet(nextRows);
-
-    workbook.Sheets[sheetName] = nextSheet;
-
-    if (!workbook.SheetNames.includes(sheetName)) {
-      workbook.SheetNames.push(sheetName);
-    }
-
-    XLSX.writeFile(workbook, workbookPath);
+    await saveRegistration(row);
 
     response.status(201).json({
-      message: 'Registration saved successfully.',
-      filePath: workbookPath,
-      savedAt
+      message: shouldUseGoogleSheets()
+        ? 'Registration saved successfully to Google Sheets.'
+        : 'Registration saved successfully.',
+      filePath: shouldUseGoogleSheets() ? undefined : workbookPath,
+      savedAt,
+      storageMode: getStorageMode(),
+      sheetUrl: googleSheetUrl || undefined
     });
   } catch (error) {
     console.error('Failed to save registration:', error);
@@ -207,6 +216,170 @@ function cleanValue(value) {
   }
 
   return String(value).trim();
+}
+
+function getStorageMode() {
+  return shouldUseGoogleSheets() ? 'google-sheets' : 'excel';
+}
+
+function shouldUseGoogleSheets() {
+  return Boolean(googleSpreadsheetId);
+}
+
+async function saveRegistration(row) {
+  if (shouldUseGoogleSheets()) {
+    await appendRegistrationToGoogleSheet(row);
+    return;
+  }
+
+  saveRegistrationToWorkbook(row);
+}
+
+function saveRegistrationToWorkbook(row) {
+  fs.mkdirSync(dataDirectory, { recursive: true });
+
+  const workbook = fs.existsSync(workbookPath) ? XLSX.readFile(workbookPath) : XLSX.utils.book_new();
+  const existingSheet = workbook.Sheets[sheetName];
+  const existingRows = existingSheet ? XLSX.utils.sheet_to_json(existingSheet) : [];
+  const nextRows = [...existingRows, row];
+  const nextSheet = XLSX.utils.json_to_sheet(nextRows);
+
+  workbook.Sheets[sheetName] = nextSheet;
+
+  if (!workbook.SheetNames.includes(sheetName)) {
+    workbook.SheetNames.push(sheetName);
+  }
+
+  XLSX.writeFile(workbook, workbookPath);
+}
+
+async function appendRegistrationToGoogleSheet(row) {
+  const auth = createGoogleAuth();
+  const sheets = google.sheets({ version: 'v4', auth });
+
+  await ensureGoogleSheetExists(sheets);
+  await ensureGoogleSheetHeader(sheets);
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: googleSpreadsheetId,
+    range: `${googleSheetName}!A:I`,
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: [
+        [
+          row.submittedAt,
+          row.campaignName,
+          row.fullName,
+          row.phoneNumber,
+          row.email,
+          row.gender,
+          row.city,
+          row.prayerRequest,
+          getPublicRegistrationUrl()
+        ]
+      ]
+    }
+  });
+}
+
+async function ensureGoogleSheetExists(sheets) {
+  const response = await sheets.spreadsheets.get({
+    spreadsheetId: googleSpreadsheetId,
+    fields: 'sheets.properties.title'
+  });
+  const titles = (response.data.sheets || []).map((sheet) => sheet.properties?.title).filter(Boolean);
+
+  if (titles.includes(googleSheetName)) {
+    return;
+  }
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: googleSpreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          addSheet: {
+            properties: {
+              title: googleSheetName
+            }
+          }
+        }
+      ]
+    }
+  });
+}
+
+async function ensureGoogleSheetHeader(sheets) {
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: googleSpreadsheetId,
+    range: `${googleSheetName}!A1:I1`
+  });
+
+  if (response.data.values?.[0]?.length) {
+    return;
+  }
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: googleSpreadsheetId,
+    range: `${googleSheetName}!A1:I1`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [
+        [
+          'Submitted At',
+          'Campaign Name',
+          'Full Name',
+          'Phone Number',
+          'Email',
+          'Gender',
+          'City / Area',
+          'Prayer Request / Notes',
+          'Registration URL'
+        ]
+      ]
+    }
+  });
+}
+
+function createGoogleAuth() {
+  const credentialsJson = cleanValue(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+  const serviceAccountEmail = cleanValue(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
+  const serviceAccountPrivateKey = cleanValue(process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY).replace(
+    /\\n/g,
+    '\n'
+  );
+  const scopes = ['https://www.googleapis.com/auth/spreadsheets'];
+
+  if (credentialsJson) {
+    return new google.auth.GoogleAuth({
+      credentials: JSON.parse(credentialsJson),
+      scopes
+    });
+  }
+
+  if (serviceAccountEmail && serviceAccountPrivateKey) {
+    return new google.auth.GoogleAuth({
+      credentials: {
+        client_email: serviceAccountEmail,
+        private_key: serviceAccountPrivateKey
+      },
+      scopes
+    });
+  }
+
+  throw new Error(
+    'Google Sheets is enabled, but service account credentials are missing. Set GOOGLE_SERVICE_ACCOUNT_JSON or GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.'
+  );
+}
+
+function getPublicRegistrationUrl() {
+  const explicitUrl = cleanValue(process.env.PUBLIC_APP_URL);
+
+  if (!explicitUrl) {
+    return '';
+  }
+
+  return explicitUrl.endsWith('/') ? explicitUrl : `${explicitUrl}/`;
 }
 
 function getPublicSiteUrl(request) {
