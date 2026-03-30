@@ -65,7 +65,6 @@ app.post('/api/registrations', (request, response) => {
     fullName: payload.fullName,
     phoneNumber: payload.phoneNumber,
     email: payload.email,
-    age: payload.age,
     gender: payload.gender,
     city: payload.city,
     prayerRequest: payload.prayerRequest
@@ -216,7 +215,6 @@ function normalizeRegistration(body) {
     fullName: cleanValue(body?.fullName),
     phoneNumber: cleanValue(body?.phoneNumber),
     email: cleanValue(body?.email),
-    age: cleanValue(body?.age),
     gender: cleanValue(body?.gender),
     city: cleanValue(body?.city),
     prayerRequest: cleanValue(body?.prayerRequest)

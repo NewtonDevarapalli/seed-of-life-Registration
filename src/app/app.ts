@@ -87,11 +87,14 @@ export class App implements AfterViewInit {
       )
       .subscribe({
         next: (response) => {
-          this.submittedCampaign = this.registration.campaignName;
+          const submittedCampaign = this.registration.campaignName;
+          const nextRegistration = this.createEmptyRegistration();
+
+          this.registration = nextRegistration;
+          form.resetForm(nextRegistration);
+          this.submittedCampaign = submittedCampaign;
           this.submitSuccess = response.message || 'Thank you. Your registration has been received successfully.';
           this.showThankYou = true;
-          this.registration = this.createEmptyRegistration();
-          form.resetForm(this.registration);
         },
         error: (error: { status?: number; error?: { message?: string } }) => {
           if (error?.status === 0) {
