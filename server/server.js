@@ -7,7 +7,9 @@ const XLSX = require('xlsx');
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
-const dataDirectory = path.join(__dirname, '..', 'data');
+const dataDirectory = process.env.REGISTRATION_DATA_DIR
+  ? path.resolve(process.env.REGISTRATION_DATA_DIR)
+  : path.join(__dirname, '..', 'data');
 const workbookPath = path.join(dataDirectory, 'registrations.xlsx');
 const sheetName = 'Registrations';
 const browserDistPath = path.join(__dirname, '..', 'dist', 'seed-of-life-registration', 'browser');
