@@ -1,0 +1,224 @@
+<main class="page-shell">
+  <section class="hero-panel">
+    <div class="hero-orb"></div>
+    <div class="hero-cross"></div>
+
+    <p class="eyebrow">Seed of Life Ministry</p>
+    <p class="campaign-kicker">{{ registration.campaignName }}</p>
+    <h1>Baptism Registration</h1>
+    <p class="lead">
+      A graceful registration experience for your Baptism campaign, designed for mobile, QR access,
+      and smooth guided form entry.
+    </p>
+
+    <div class="hero-points">
+      <div class="hero-point">
+        <span class="hero-label">Experience</span>
+        <strong>Elegant and guided</strong>
+      </div>
+      <div class="hero-point">
+        <span class="hero-label">Collection</span>
+        <strong>Saved into Excel</strong>
+      </div>
+      <div class="hero-point">
+        <span class="hero-label">Audience</span>
+        <strong>Made for mobile users</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="form-panel">
+    @if (showThankYou) {
+      <div class="thanks-card">
+        <p class="eyebrow">Thank You</p>
+        <h2>Registration submitted.</h2>
+        <p>
+          Thank you for registering for <strong>{{ submittedCampaign || 'Baptism' }}</strong>.
+          We have received the details successfully.
+        </p>
+        <p class="thanks-subtext">{{ submitSuccess }}</p>
+        <button type="button" class="primary-button" (click)="registerAnother()">
+          Register Another Person
+        </button>
+      </div>
+    } @else {
+      <div class="form-header">
+        <p class="eyebrow">Registration Form</p>
+        <h2>Enter the participant details</h2>
+        <p>Required fields are marked. Optional fields can be skipped.</p>
+      </div>
+
+      <form #registrationForm="ngForm" (ngSubmit)="submitRegistration(registrationForm)" novalidate>
+        <div class="field-stack">
+          <div class="field-card hero-field-card">
+            <div class="field-topline">
+              <span class="field-number">01</span>
+              <span class="field-badge required">Required</span>
+            </div>
+            <label class="field">
+              <span>Full Name</span>
+              <input
+                #focusField
+                data-field="fullName"
+                type="text"
+                name="fullName"
+                [(ngModel)]="registration.fullName"
+                required
+                #fullName="ngModel"
+                placeholder="Enter full name"
+                (keydown.enter)="focusNextFromEnter($event, 'fullName')"
+              />
+              @if (fullName.invalid && fullName.touched) {
+                <small class="error-text">Full name is required.</small>
+              }
+            </label>
+          </div>
+
+          <div class="field-card hero-field-card">
+            <div class="field-topline">
+              <span class="field-number">02</span>
+              <span class="field-badge required">Required</span>
+            </div>
+            <label class="field">
+              <span>Phone Number</span>
+              <input
+                #focusField
+                data-field="phoneNumber"
+                type="tel"
+                name="phoneNumber"
+                [(ngModel)]="registration.phoneNumber"
+                required
+                #phoneNumber="ngModel"
+                placeholder="Enter phone number"
+                (input)="handlePhoneInput(registration.phoneNumber)"
+                (keydown.enter)="focusNextFromEnter($event, 'phoneNumber')"
+              />
+              @if (phoneNumber.invalid && phoneNumber.touched) {
+                <small class="error-text">Phone number is required.</small>
+              }
+            </label>
+          </div>
+
+          <div class="field-card optional-card">
+            <div class="field-topline">
+              <span class="field-number">03</span>
+              <span class="field-badge">Optional</span>
+              <button type="button" class="skip-button" (click)="skipToNext('email')">Skip</button>
+            </div>
+            <label class="field">
+              <span>Email Address</span>
+              <input
+                #focusField
+                data-field="email"
+                type="email"
+                name="email"
+                [(ngModel)]="registration.email"
+                placeholder="Enter email address"
+                (keydown.enter)="focusNextFromEnter($event, 'email')"
+              />
+            </label>
+          </div>
+
+          <div class="split-layout">
+            <div class="field-card optional-card">
+              <div class="field-topline">
+                <span class="field-number">04</span>
+                <span class="field-badge">Optional</span>
+                <button type="button" class="skip-button" (click)="skipToNext('age')">Skip</button>
+              </div>
+              <label class="field">
+                <span>Age</span>
+                <input
+                  #focusField
+                  data-field="age"
+                  type="number"
+                  min="1"
+                  name="age"
+                  [(ngModel)]="registration.age"
+                  placeholder="Age"
+                  (change)="advanceIfFilled('age', registration.age)"
+                  (keydown.enter)="focusNextFromEnter($event, 'age')"
+                />
+              </label>
+            </div>
+
+            <div class="field-card optional-card">
+              <div class="field-topline">
+                <span class="field-number">05</span>
+                <span class="field-badge">Optional</span>
+                <button type="button" class="skip-button" (click)="skipToNext('gender')">Skip</button>
+              </div>
+              <label class="field">
+                <span>Gender</span>
+                <select
+                  #focusField
+                  data-field="gender"
+                  name="gender"
+                  [(ngModel)]="registration.gender"
+                  (change)="advanceIfFilled('gender', registration.gender)"
+                >
+                  <option value="">Select</option>
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="field-card hero-field-card">
+            <div class="field-topline">
+              <span class="field-number">06</span>
+              <span class="field-badge required">Required</span>
+            </div>
+            <label class="field">
+              <span>City / Area</span>
+              <input
+                #focusField
+                data-field="city"
+                type="text"
+                name="city"
+                [(ngModel)]="registration.city"
+                required
+                #city="ngModel"
+                placeholder="Enter city or area"
+                (keydown.enter)="focusNextFromEnter($event, 'city')"
+              />
+              @if (city.invalid && city.touched) {
+                <small class="error-text">City or area is required.</small>
+              }
+            </label>
+          </div>
+
+          <div class="field-card optional-card message-card">
+            <div class="field-topline">
+              <span class="field-number">07</span>
+              <span class="field-badge">Optional</span>
+            </div>
+            <label class="field">
+              <span>Prayer Request / Notes</span>
+              <textarea
+                #focusField
+                data-field="prayerRequest"
+                rows="4"
+                name="prayerRequest"
+                [(ngModel)]="registration.prayerRequest"
+                placeholder="Add any notes or prayer requests"
+              ></textarea>
+            </label>
+          </div>
+        </div>
+
+        @if (submitError) {
+          <p class="banner error-banner">{{ submitError }}</p>
+        }
+
+        <div class="submit-row">
+          <button #submitButton type="submit" class="primary-button" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Submitting...' : 'Submit Registration' }}
+          </button>
+        </div>
+      </form>
+    }
+  </section>
+</main>

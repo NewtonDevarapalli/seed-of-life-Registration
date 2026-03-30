@@ -1,0 +1,456 @@
+:host {
+  --bg: #030303;
+  --panel: rgba(14, 14, 16, 0.94);
+  --panel-soft: rgba(21, 21, 24, 0.92);
+  --line: rgba(214, 181, 118, 0.16);
+  --line-strong: rgba(214, 181, 118, 0.4);
+  --gold: #d8b36d;
+  --gold-bright: #f3dfb0;
+  --text-main: #f8f3ea;
+  --text-soft: #bcb1a3;
+  --success: #90e5ad;
+  --error: #ffabab;
+
+  display: block;
+  min-height: 100vh;
+  color: var(--text-main);
+}
+
+.page-shell {
+  min-height: 100vh;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(300px, 0.88fr) minmax(340px, 1.12fr);
+  gap: 20px;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(216, 179, 109, 0.12), transparent 25%),
+    radial-gradient(circle at 90% 80%, rgba(216, 179, 109, 0.08), transparent 30%),
+    linear-gradient(180deg, #010101 0%, #050505 48%, #020202 100%);
+}
+
+.hero-panel,
+.form-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(22, 22, 26, 0.95), rgba(8, 8, 10, 0.96)),
+    var(--panel);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.hero-panel {
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 760px;
+}
+
+.hero-orb {
+  position: absolute;
+  inset: 8% auto auto 8%;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(243, 223, 176, 0.22), rgba(216, 179, 109, 0.06) 42%, transparent 70%);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.hero-cross {
+  position: absolute;
+  inset: auto 12% 14% auto;
+  width: 120px;
+  height: 120px;
+  opacity: 0.14;
+}
+
+.hero-cross::before,
+.hero-cross::after {
+  content: '';
+  position: absolute;
+  background: linear-gradient(180deg, transparent, var(--gold), transparent);
+}
+
+.hero-cross::before {
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.hero-cross::after {
+  top: 38%;
+  left: 12%;
+  width: 76%;
+  height: 2px;
+}
+
+.eyebrow {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.campaign-kicker {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 12px;
+  color: var(--gold-bright);
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: 'Fraunces', 'Georgia', serif;
+  line-height: 1.02;
+}
+
+h1 {
+  font-size: clamp(3rem, 5vw, 5.6rem);
+  max-width: 8ch;
+}
+
+h2 {
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.lead,
+.form-header p,
+.thanks-card p {
+  color: var(--text-soft);
+}
+
+.lead {
+  position: relative;
+  z-index: 1;
+  margin: 18px 0 30px;
+  max-width: 36ch;
+  line-height: 1.75;
+}
+
+.hero-points {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+}
+
+.hero-point,
+.field-card,
+.thanks-card {
+  border: 1px solid rgba(216, 179, 109, 0.12);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(26, 26, 28, 0.95), rgba(13, 13, 16, 0.95)),
+    var(--panel-soft);
+}
+
+.hero-point {
+  padding: 18px 20px;
+}
+
+.hero-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.hero-point strong {
+  color: var(--gold-bright);
+  font-size: 1.08rem;
+}
+
+.form-panel {
+  padding: 28px;
+}
+
+.form-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(130deg, rgba(216, 179, 109, 0.06), transparent 24%),
+    linear-gradient(300deg, rgba(216, 179, 109, 0.05), transparent 26%);
+  pointer-events: none;
+}
+
+.form-header {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 22px;
+}
+
+.form-header p {
+  margin: 10px 0 0;
+}
+
+.field-stack {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+}
+
+.split-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.field-card {
+  padding: 18px;
+}
+
+.hero-field-card {
+  background:
+    linear-gradient(180deg, rgba(30, 22, 10, 0.35), rgba(13, 13, 16, 0.96)),
+    var(--panel-soft);
+}
+
+.optional-card {
+  background:
+    linear-gradient(180deg, rgba(23, 23, 26, 0.96), rgba(10, 10, 13, 0.96)),
+    var(--panel-soft);
+}
+
+.message-card {
+  min-height: 220px;
+}
+
+.field-topline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.field-number {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(216, 179, 109, 0.22);
+  background: rgba(216, 179, 109, 0.08);
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.field-badge {
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(216, 179, 109, 0.09);
+  color: var(--gold);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.field-badge.required {
+  background: rgba(243, 223, 176, 0.1);
+  color: var(--gold-bright);
+}
+
+.skip-button {
+  margin-left: auto;
+  border: 1px solid rgba(216, 179, 109, 0.18);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--text-soft);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.skip-button:hover {
+  color: var(--gold-bright);
+  border-color: rgba(216, 179, 109, 0.34);
+  transform: translateY(-1px);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field span {
+  font-weight: 700;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid rgba(216, 179, 109, 0.14);
+  border-radius: 18px;
+  padding: 15px 16px;
+  background: rgba(3, 3, 5, 0.95);
+  color: var(--text-main);
+  font: inherit;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: #7b6f62;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--line-strong);
+  background: rgba(6, 6, 8, 0.98);
+  box-shadow: 0 0 0 4px rgba(216, 179, 109, 0.08);
+  transform: translateY(-1px);
+}
+
+.field textarea {
+  min-height: 138px;
+  resize: vertical;
+}
+
+.error-text {
+  color: var(--error);
+}
+
+.banner {
+  position: relative;
+  z-index: 1;
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+
+.error-banner {
+  color: var(--error);
+  border: 1px solid rgba(255, 171, 171, 0.18);
+  background: rgba(86, 22, 22, 0.36);
+}
+
+.submit-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 24px;
+}
+
+.primary-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 15px 24px;
+  background: linear-gradient(135deg, #f4e0b6, #d8b36d);
+  color: #140f06;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 18px 30px rgba(216, 179, 109, 0.16);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.primary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 22px 34px rgba(216, 179, 109, 0.24);
+}
+
+.primary-button:disabled {
+  opacity: 0.72;
+  cursor: progress;
+}
+
+.thanks-card {
+  position: relative;
+  z-index: 1;
+  padding: 34px;
+}
+
+.thanks-card h2 {
+  margin-bottom: 16px;
+}
+
+.thanks-card p {
+  line-height: 1.75;
+}
+
+.thanks-card strong {
+  color: var(--gold-bright);
+}
+
+.thanks-subtext {
+  color: var(--success);
+  margin: 10px 0 24px;
+}
+
+@media (max-width: 980px) {
+  .page-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-panel {
+    min-height: 520px;
+  }
+}
+
+@media (max-width: 720px) {
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    padding: 12px;
+  }
+
+  .hero-panel,
+  .form-panel {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .field-card,
+  .thanks-card {
+    padding: 16px;
+  }
+
+  .field-topline {
+    flex-wrap: wrap;
+  }
+
+  .skip-button {
+    margin-left: 0;
+  }
+}
