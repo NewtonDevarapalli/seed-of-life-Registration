@@ -1,9 +1,10 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import {
   AfterViewInit,
   Component,
   ElementRef,
+  OnInit,
   QueryList,
   ViewChild,
   ViewChildren,
@@ -28,6 +29,18 @@ type RegistrationResponse = {
   savedAt: string;
 };
 
+type RegistrationSummary = {
+  count: number;
+  exportUrl: string;
+  latestRegistrations: Array<{
+    submittedAt: string;
+    fullName: string;
+    phoneNumber: string;
+    gender: string;
+    city: string;
+  }>;
+};
+
 type FocusFieldName = 'fullName' | 'phoneNumber' | 'email' | 'gender' | 'city' | 'prayerRequest';
 
 @Component({
@@ -36,8 +49,9 @@ type FocusFieldName = 'fullName' | 'phoneNumber' | 'email' | 'gender' | 'city' |
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App implements AfterViewInit {
+export class App implements OnInit, AfterViewInit {
   private readonly http = inject(HttpClient);
+  private readonly document = inject(DOCUMENT);
   private readonly fieldOrder: FocusFieldName[] = [
     'fullName',
     'phoneNumber',
@@ -56,12 +70,31 @@ export class App implements AfterViewInit {
   protected submitSuccess = '';
   protected showThankYou = false;
   protected submittedCampaign = '';
+  protected readonly isAdminPage = this.document.location.pathname.startsWith('/admin');
   protected readonly qrImageUrl = '/promo/qr.png';
   protected readonly bannerImageUrl = '/promo/banner.png';
+  protected readonly exportUrl = '/api/registrations/export';
+  protected adminError = '';
+  protected isLoadingAdmin = false;
+  protected registrationSummary: RegistrationSummary = {
+    count: 0,
+    exportUrl: this.exportUrl,
+    latestRegistrations: []
+  };
 
   protected registration: RegistrationFormModel = this.createEmptyRegistration();
 
+  ngOnInit(): void {
+    if (this.isAdminPage) {
+      this.loadRegistrationSummary();
+    }
+  }
+
   ngAfterViewInit(): void {
+    if (this.isAdminPage) {
+      return;
+    }
+
     this.focusFieldByName('fullName');
   }
 
@@ -145,6 +178,10 @@ export class App implements AfterViewInit {
     this.focusNextField(currentField);
   }
 
+  protected refreshRegistrationSummary(): void {
+    this.loadRegistrationSummary();
+  }
+
   private focusNextField(currentField: FocusFieldName): void {
     const currentIndex = this.fieldOrder.indexOf(currentField);
     const nextField = this.fieldOrder[currentIndex + 1];
@@ -187,5 +224,27 @@ export class App implements AfterViewInit {
       city: '',
       prayerRequest: ''
     };
+  }
+
+  private loadRegistrationSummary(): void {
+    this.isLoadingAdmin = true;
+    this.adminError = '';
+
+    this.http
+      .get<RegistrationSummary>('/api/registrations/summary')
+      .pipe(
+        timeout(60000),
+        finalize(() => {
+          this.isLoadingAdmin = false;
+        })
+      )
+      .subscribe({
+        next: (summary) => {
+          this.registrationSummary = summary;
+        },
+        error: () => {
+          this.adminError = 'Unable to load registration summary right now.';
+        }
+      });
   }
 }

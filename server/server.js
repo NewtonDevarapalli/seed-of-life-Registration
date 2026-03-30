@@ -28,6 +28,26 @@ app.get('/api/registrations/export', (_request, response) => {
   response.download(workbookPath, 'registrations.xlsx');
 });
 
+app.get('/api/registrations/summary', (_request, response) => {
+  const rows = getRegistrationRows();
+  const latestRegistrations = rows
+    .slice(-10)
+    .reverse()
+    .map((row) => ({
+      submittedAt: cleanValue(row.submittedAt),
+      fullName: cleanValue(row.fullName),
+      phoneNumber: cleanValue(row.phoneNumber),
+      gender: cleanValue(row.gender),
+      city: cleanValue(row.city)
+    }));
+
+  response.json({
+    count: rows.length,
+    latestRegistrations,
+    exportUrl: '/api/registrations/export'
+  });
+});
+
 app.post('/api/registrations', (request, response) => {
   const payload = normalizeRegistration(request.body);
 
@@ -54,9 +74,7 @@ app.post('/api/registrations', (request, response) => {
     fs.mkdirSync(dataDirectory, { recursive: true });
 
     const workbook = fs.existsSync(workbookPath) ? XLSX.readFile(workbookPath) : XLSX.utils.book_new();
-    const existingSheet = workbook.Sheets[sheetName];
-    const existingRows = existingSheet ? XLSX.utils.sheet_to_json(existingSheet) : [];
-    const nextRows = [...existingRows, row];
+    const nextRows = [...getRegistrationRows(workbook), row];
     const nextSheet = XLSX.utils.json_to_sheet(nextRows);
 
     workbook.Sheets[sheetName] = nextSheet;
@@ -207,6 +225,14 @@ function cleanValue(value) {
   }
 
   return String(value).trim();
+}
+
+function getRegistrationRows(workbook = null) {
+  const sourceWorkbook =
+    workbook || (fs.existsSync(workbookPath) ? XLSX.readFile(workbookPath) : XLSX.utils.book_new());
+  const existingSheet = sourceWorkbook.Sheets[sheetName];
+
+  return existingSheet ? XLSX.utils.sheet_to_json(existingSheet) : [];
 }
 
 function getPublicSiteUrl(request) {

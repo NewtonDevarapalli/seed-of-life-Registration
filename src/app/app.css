@@ -100,6 +100,105 @@ h2 {
   margin: 10px 0 0;
 }
 
+.admin-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-header {
+  margin-bottom: 18px;
+}
+
+.admin-subtext {
+  color: var(--text-soft);
+}
+
+.admin-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.admin-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.metric-card {
+  border: 1px solid rgba(216, 179, 109, 0.12);
+  border-radius: 24px;
+  padding: 20px;
+  background:
+    linear-gradient(180deg, rgba(30, 22, 10, 0.35), rgba(13, 13, 16, 0.96)),
+    var(--panel-soft);
+}
+
+.metric-label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--gold);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.metric-card strong {
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.admin-list-card {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(216, 179, 109, 0.1);
+  border-radius: 18px;
+  background: rgba(8, 8, 10, 0.72);
+}
+
+.admin-row strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.admin-row p {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.admin-row-meta {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  text-align: right;
+  color: var(--text-soft);
+  font-size: 0.94rem;
+}
+
+.admin-empty {
+  margin: 0;
+  color: var(--text-soft);
+}
+
 .field-stack {
   position: relative;
   z-index: 1;
@@ -273,6 +372,9 @@ h2 {
 }
 
 .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 999px;
   padding: 15px 24px;
@@ -296,6 +398,40 @@ h2 {
 .primary-button:disabled {
   opacity: 0.72;
   cursor: progress;
+}
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(216, 179, 109, 0.22);
+  border-radius: 999px;
+  padding: 15px 24px;
+  background: rgba(17, 17, 20, 0.92);
+  color: var(--gold-bright);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    opacity 160ms ease;
+}
+
+.secondary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(216, 179, 109, 0.4);
+  background: rgba(24, 24, 28, 0.96);
+}
+
+.secondary-button:disabled {
+  opacity: 0.72;
+  cursor: progress;
+}
+
+.admin-link-button {
+  text-decoration: none;
 }
 
 .thanks-card {
@@ -330,6 +466,19 @@ h2 {
 @media (max-width: 720px) {
   .split-layout {
     grid-template-columns: 1fr;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-row {
+    flex-direction: column;
+  }
+
+  .admin-row-meta {
+    justify-items: start;
+    text-align: left;
   }
 }
 

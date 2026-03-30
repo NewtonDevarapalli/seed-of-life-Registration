@@ -1,6 +1,64 @@
 <main class="page-shell">
   <section class="form-panel">
-    @if (showThankYou) {
+    @if (isAdminPage) {
+      <div class="admin-shell">
+        <div class="form-header admin-header">
+          <p class="eyebrow">Seed of Life Ministry</p>
+          <h2>Registration Dashboard</h2>
+          <p class="admin-subtext">View the total registrations, latest entries, and download the Excel file.</p>
+        </div>
+
+        <div class="admin-actions">
+          <button type="button" class="secondary-button" (click)="refreshRegistrationSummary()" [disabled]="isLoadingAdmin">
+            {{ isLoadingAdmin ? 'Refreshing...' : 'Refresh Data' }}
+          </button>
+          <a class="primary-button admin-link-button" [href]="registrationSummary.exportUrl || exportUrl">
+            Download Excel
+          </a>
+        </div>
+
+        @if (adminError) {
+          <p class="banner error-banner">{{ adminError }}</p>
+        }
+
+        <div class="admin-grid">
+          <div class="metric-card">
+            <span class="metric-label">Total Registrations</span>
+            <strong>{{ registrationSummary.count }}</strong>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Latest Entries</span>
+            <strong>{{ registrationSummary.latestRegistrations.length }}</strong>
+          </div>
+        </div>
+
+        <div class="field-card admin-list-card">
+          <div class="field-topline">
+            <span class="field-badge required">Recent Registrations</span>
+          </div>
+
+          @if (!registrationSummary.latestRegistrations.length && !isLoadingAdmin) {
+            <p class="admin-empty">No registrations yet.</p>
+          } @else {
+            <div class="admin-list">
+              @for (registrationEntry of registrationSummary.latestRegistrations; track registrationEntry.submittedAt + registrationEntry.fullName) {
+                <div class="admin-row">
+                  <div>
+                    <strong>{{ registrationEntry.fullName || 'Unnamed registration' }}</strong>
+                    <p>{{ registrationEntry.city || 'No city' }} • {{ registrationEntry.gender || 'Gender not set' }}</p>
+                  </div>
+                  <div class="admin-row-meta">
+                    <span>{{ registrationEntry.phoneNumber || 'No phone' }}</span>
+                    <span>{{ registrationEntry.submittedAt | date: 'medium' }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    } @else if (showThankYou) {
       <div class="thanks-card">
         <p class="eyebrow">Thank You</p>
         <h2>Registration submitted.</h2>
