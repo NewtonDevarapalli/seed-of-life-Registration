@@ -113,6 +113,10 @@ h2 {
   gap: 14px;
 }
 
+.single-optional-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .field-card {
   padding: 18px;
 }
@@ -259,6 +263,13 @@ h2 {
   display: flex;
   justify-content: flex-start;
   margin-top: 24px;
+}
+
+.submitting-note {
+  position: relative;
+  z-index: 1;
+  margin: 14px 0 0;
+  color: var(--text-soft);
 }
 
 .primary-button {

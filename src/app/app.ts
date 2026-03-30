@@ -17,7 +17,6 @@ type RegistrationFormModel = {
   fullName: string;
   phoneNumber: string;
   email: string;
-  age: string;
   gender: string;
   city: string;
   prayerRequest: string;
@@ -29,7 +28,7 @@ type RegistrationResponse = {
   savedAt: string;
 };
 
-type FocusFieldName = 'fullName' | 'phoneNumber' | 'email' | 'age' | 'gender' | 'city' | 'prayerRequest';
+type FocusFieldName = 'fullName' | 'phoneNumber' | 'email' | 'gender' | 'city' | 'prayerRequest';
 
 @Component({
   selector: 'app-root',
@@ -43,7 +42,6 @@ export class App implements AfterViewInit {
     'fullName',
     'phoneNumber',
     'email',
-    'age',
     'gender',
     'city',
     'prayerRequest'
@@ -82,21 +80,28 @@ export class App implements AfterViewInit {
     this.http
       .post<RegistrationResponse>('/api/registrations', this.registration)
       .pipe(
-        timeout(15000),
+        timeout(60000),
         finalize(() => {
           this.isSubmitting = false;
         })
       )
       .subscribe({
-        next: () => {
+        next: (response) => {
           this.submittedCampaign = this.registration.campaignName;
-          this.submitSuccess = 'Thank you. Your registration has been received successfully.';
+          this.submitSuccess = response.message || 'Thank you. Your registration has been received successfully.';
           this.showThankYou = true;
           this.registration = this.createEmptyRegistration();
           form.resetForm(this.registration);
         },
-        error: () => {
+        error: (error: { status?: number; error?: { message?: string } }) => {
+          if (error?.status === 0) {
+            this.submitError =
+              'The server may be waking up. Please wait a moment and try submitting again.';
+            return;
+          }
+
           this.submitError =
+            error?.error?.message ||
             'The registration service is not responding right now. Please try again in a moment.';
         }
       });
@@ -175,7 +180,6 @@ export class App implements AfterViewInit {
       fullName: '',
       phoneNumber: '',
       email: '',
-      age: '',
       gender: '',
       city: '',
       prayerRequest: ''

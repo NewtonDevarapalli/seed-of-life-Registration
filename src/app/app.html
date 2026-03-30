@@ -90,32 +90,10 @@
             </label>
           </div>
 
-          <div class="split-layout">
+          <div class="split-layout single-optional-row">
             <div class="field-card optional-card">
               <div class="field-topline">
                 <span class="field-number">04</span>
-                <span class="field-badge">Optional</span>
-                <button type="button" class="skip-button" (click)="skipToNext('age')">Skip</button>
-              </div>
-              <label class="field">
-                <span>Age</span>
-                <input
-                  #focusField
-                  data-field="age"
-                  type="number"
-                  min="1"
-                  name="age"
-                  [(ngModel)]="registration.age"
-                  placeholder="Age"
-                  (change)="advanceIfFilled('age', registration.age)"
-                  (keydown.enter)="focusNextFromEnter($event, 'age')"
-                />
-              </label>
-            </div>
-
-            <div class="field-card optional-card">
-              <div class="field-topline">
-                <span class="field-number">05</span>
                 <span class="field-badge">Optional</span>
                 <button type="button" class="skip-button" (click)="skipToNext('gender')">Skip</button>
               </div>
@@ -139,7 +117,7 @@
 
           <div class="field-card hero-field-card">
             <div class="field-topline">
-              <span class="field-number">06</span>
+              <span class="field-number">05</span>
               <span class="field-badge required">Required</span>
             </div>
             <label class="field">
@@ -163,7 +141,7 @@
 
           <div class="field-card optional-card message-card">
             <div class="field-topline">
-              <span class="field-number">07</span>
+              <span class="field-number">06</span>
               <span class="field-badge">Optional</span>
             </div>
             <label class="field">
@@ -189,6 +167,10 @@
             {{ isSubmitting ? 'Submitting...' : 'Submit Registration' }}
           </button>
         </div>
+
+        @if (isSubmitting) {
+          <p class="submitting-note">Submitting to the registration server. The first request may take a few moments.</p>
+        }
       </form>
     }
   </section>
