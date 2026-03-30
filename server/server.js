@@ -17,7 +17,10 @@ const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4200')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+app.use(express.json());
+
 app.use(
+  '/api',
   cors({
     origin(origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) {
@@ -29,7 +32,6 @@ app.use(
     }
   })
 );
-app.use(express.json());
 
 app.get('/api/health', (_request, response) => {
   response.json({ status: 'ok' });
