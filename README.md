@@ -1,11 +1,12 @@
 # Seed Of Life Registration
 
-This project is a Baptism registration application for Seed of Life Ministry. It now runs as a
-single Render-hosted Node application that:
+This project is a Baptism registration application for Seed of Life Ministry. It runs as a single
+Node application that:
 
 - serves the Angular frontend
 - accepts form submissions
-- stores submissions in an Excel file inside the same app
+- stores registrations in Postgres
+- provides an admin dashboard and Excel export generated from the database
 - generates the QR image and promo banner inside the same app
 
 ## Features
@@ -14,13 +15,21 @@ single Render-hosted Node application that:
 - Premium black-and-gold registration form
 - Guided field progression with skip support for optional fields
 - Thank-you screen after successful submission
-- Excel logging inside the same application
+- Admin dashboard at `/admin`
+- Excel export from the database at `/api/registrations/export`
 - Built-in QR image route and banner image route
 
 ## Local run
 
+Install dependencies:
+
 ```bash
 npm install
+```
+
+Start the full development experience:
+
+```bash
 npm start
 ```
 
@@ -36,51 +45,72 @@ Backend:
 http://localhost:3000/
 ```
 
-## Single Render deployment with persistent Excel storage
+## Database modes
 
-This repo includes `render.yaml` for one web service:
+The app supports two modes:
 
-```text
-seed-of-life-registration
-```
+1. Real Postgres when `DATABASE_URL` is set
+2. In-memory Postgres for local development/testing when `DATABASE_URL` is not set
 
-Render will:
+That means you can run the app locally without setting up Postgres first, but for real hosted
+storage you should set `DATABASE_URL`.
 
-1. install dependencies
-2. build the Angular app
-3. run the Node server
-4. attach a persistent disk at `/var/data`
-5. save `registrations.xlsx` on that disk
-6. serve both frontend and Excel-writing API from the same domain
+## Free Postgres deployment
 
-The app uses:
+This repo includes `render.yaml` for a free web service. The web app itself can stay on Render
+free, and you can point it to any free Postgres provider using `DATABASE_URL`.
 
-- local development: [data](C:/Users/Asha/seed-of-life-Registration/data)
-- Render: `/var/data` through `REGISTRATION_DATA_DIR`
-
-## Render steps
-
-1. Open your Render service.
-2. Change the plan to one that supports disks, such as `Starter`.
-3. Add a disk:
-   - Name: `registration-data`
-   - Mount path: `/var/data`
-   - Size: `1 GB`
-4. Add environment variable:
+Required environment variable:
 
 ```text
-REGISTRATION_DATA_DIR=/var/data
+DATABASE_URL=your_postgres_connection_string
 ```
 
-5. Deploy the latest commit.
+Optional:
 
-After that, the Excel file will be stored on the Render disk and should stay across redeploys.
+```text
+DATABASE_SSL=true
+```
 
-## Important note about Excel on Render
+`DATABASE_SSL=true` is helpful for hosted providers that require SSL. If your connection string
+already includes `sslmode=require`, the app also enables SSL automatically.
 
-- Without a disk, Render storage is temporary and old registrations can disappear.
-- With a persistent disk, the Excel file survives redeploys and restarts.
-- For production at larger scale, a database is still better.
+## Render setup
+
+1. Open your Render web service.
+2. Add environment variable:
+
+```text
+DATABASE_URL=your_postgres_connection_string
+```
+
+3. If your provider requires SSL, also add:
+
+```text
+DATABASE_SSL=true
+```
+
+4. Deploy the latest commit.
+
+After deployment:
+
+- registrations are saved in Postgres
+- `/admin` shows the latest entries and count
+- `/api/registrations/export` downloads an Excel file generated from database rows
+
+## Admin dashboard
+
+Open:
+
+```text
+/admin
+```
+
+The dashboard shows:
+
+- total registration count
+- latest registrations
+- download Excel button
 
 ## Useful scripts
 

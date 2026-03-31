@@ -1,56 +1,99 @@
 const express = require('express');
 const fs = require('fs');
+const { newDb } = require('pg-mem');
 const path = require('path');
+const { Pool } = require('pg');
 const QRCode = require('qrcode');
 const sharp = require('sharp');
 const XLSX = require('xlsx');
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
-const dataDirectory = process.env.REGISTRATION_DATA_DIR
-  ? path.resolve(process.env.REGISTRATION_DATA_DIR)
-  : path.join(__dirname, '..', 'data');
-const workbookPath = path.join(dataDirectory, 'registrations.xlsx');
-const sheetName = 'Registrations';
+const exportFileName = 'registrations.xlsx';
 const browserDistPath = path.join(__dirname, '..', 'dist', 'seed-of-life-registration', 'browser');
+const registrationTableName = 'registrations';
+const database = createDatabase();
+const databaseReady = database.initialize();
+
 app.use(express.json());
 
-app.get('/api/health', (_request, response) => {
-  response.json({ status: 'ok' });
-});
+app.get('/api/health', async (_request, response) => {
+  try {
+    await databaseReady;
 
-app.get('/api/registrations/export', (_request, response) => {
-  if (!fs.existsSync(workbookPath)) {
-    response.status(404).json({
-      message: 'No registrations have been exported yet.'
+    response.json({
+      status: 'ok',
+      storageMode: 'postgres',
+      databaseMode: database.mode
     });
-    return;
+  } catch (error) {
+    console.error('Health check failed:', error);
+    response.status(500).json({
+      status: 'error',
+      message: 'Database connection failed.'
+    });
   }
-
-  response.download(workbookPath, 'registrations.xlsx');
 });
 
-app.get('/api/registrations/summary', (_request, response) => {
-  const rows = getRegistrationRows();
-  const latestRegistrations = rows
-    .slice(-10)
-    .reverse()
-    .map((row) => ({
-      submittedAt: cleanValue(row.submittedAt),
-      fullName: cleanValue(row.fullName),
-      phoneNumber: cleanValue(row.phoneNumber),
-      gender: cleanValue(row.gender),
-      city: cleanValue(row.city)
-    }));
+app.get('/api/registrations/export', async (_request, response) => {
+  try {
+    await databaseReady;
+    const rows = await database.getAllRegistrations();
 
-  response.json({
-    count: rows.length,
-    latestRegistrations,
-    exportUrl: '/api/registrations/export'
-  });
+    if (!rows.length) {
+      response.status(404).json({
+        message: 'No registrations have been exported yet.'
+      });
+      return;
+    }
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(rows.map(toExportRow));
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations');
+
+    const buffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'buffer'
+    });
+
+    response
+      .status(200)
+      .setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      )
+      .setHeader('Content-Disposition', `attachment; filename="${exportFileName}"`)
+      .send(buffer);
+  } catch (error) {
+    console.error('Failed to export registrations:', error);
+    response.status(500).json({
+      message: 'Failed to export registrations.'
+    });
+  }
 });
 
-app.post('/api/registrations', (request, response) => {
+app.get('/api/registrations/summary', async (_request, response) => {
+  try {
+    await databaseReady;
+    const [count, latestRegistrations] = await Promise.all([
+      database.getRegistrationCount(),
+      database.getLatestRegistrations(10)
+    ]);
+
+    response.json({
+      count,
+      latestRegistrations,
+      exportUrl: '/api/registrations/export'
+    });
+  } catch (error) {
+    console.error('Failed to load registration summary:', error);
+    response.status(500).json({
+      message: 'Failed to load registration summary.'
+    });
+  }
+});
+
+app.post('/api/registrations', async (request, response) => {
   const payload = normalizeRegistration(request.body);
 
   if (!payload.campaignName || !payload.fullName || !payload.phoneNumber || !payload.city) {
@@ -73,24 +116,13 @@ app.post('/api/registrations', (request, response) => {
   };
 
   try {
-    fs.mkdirSync(dataDirectory, { recursive: true });
-
-    const workbook = fs.existsSync(workbookPath) ? XLSX.readFile(workbookPath) : XLSX.utils.book_new();
-    const nextRows = [...getRegistrationRows(workbook), row];
-    const nextSheet = XLSX.utils.json_to_sheet(nextRows);
-
-    workbook.Sheets[sheetName] = nextSheet;
-
-    if (!workbook.SheetNames.includes(sheetName)) {
-      workbook.SheetNames.push(sheetName);
-    }
-
-    XLSX.writeFile(workbook, workbookPath);
+    await databaseReady;
+    await database.saveRegistration(row);
 
     response.status(201).json({
       message: 'Registration saved successfully.',
-      filePath: workbookPath,
-      savedAt
+      savedAt,
+      storageMode: 'postgres'
     });
   } catch (error) {
     console.error('Failed to save registration:', error);
@@ -229,12 +261,253 @@ function cleanValue(value) {
   return String(value).trim();
 }
 
-function getRegistrationRows(workbook = null) {
-  const sourceWorkbook =
-    workbook || (fs.existsSync(workbookPath) ? XLSX.readFile(workbookPath) : XLSX.utils.book_new());
-  const existingSheet = sourceWorkbook.Sheets[sheetName];
+function createDatabase() {
+  if (!process.env.DATABASE_URL) {
+    return createPgMemDatabase();
+  }
 
-  return existingSheet ? XLSX.utils.sheet_to_json(existingSheet) : [];
+  return createPostgresDatabase(process.env.DATABASE_URL);
+}
+
+function createPostgresDatabase(connectionString) {
+  const pool = new Pool({
+    connectionString,
+    ssl: shouldUseSsl(connectionString)
+      ? {
+          rejectUnauthorized: false
+        }
+      : undefined
+  });
+
+  return {
+    mode: 'postgres',
+    async initialize() {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS ${registrationTableName} (
+          id BIGSERIAL PRIMARY KEY,
+          submitted_at TIMESTAMPTZ NOT NULL,
+          campaign_name TEXT NOT NULL,
+          full_name TEXT NOT NULL,
+          phone_number TEXT NOT NULL,
+          email TEXT NOT NULL DEFAULT '',
+          gender TEXT NOT NULL DEFAULT '',
+          city TEXT NOT NULL,
+          prayer_request TEXT NOT NULL DEFAULT ''
+        )
+      `);
+    },
+    async saveRegistration(row) {
+      await pool.query(
+        `
+          INSERT INTO ${registrationTableName} (
+            submitted_at,
+            campaign_name,
+            full_name,
+            phone_number,
+            email,
+            gender,
+            city,
+            prayer_request
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `,
+        [
+          row.submittedAt,
+          row.campaignName,
+          row.fullName,
+          row.phoneNumber,
+          row.email,
+          row.gender,
+          row.city,
+          row.prayerRequest
+        ]
+      );
+    },
+    async getRegistrationCount() {
+      const result = await pool.query(`SELECT COUNT(*)::int AS count FROM ${registrationTableName}`);
+      return Number(result.rows[0]?.count || 0);
+    },
+    async getLatestRegistrations(limit) {
+      const result = await pool.query(
+        `
+          SELECT submitted_at, full_name, phone_number, gender, city
+          FROM ${registrationTableName}
+          ORDER BY submitted_at DESC, id DESC
+          LIMIT $1
+        `,
+        [limit]
+      );
+
+      return result.rows.map((row) => ({
+        submittedAt: row.submitted_at instanceof Date ? row.submitted_at.toISOString() : cleanValue(row.submitted_at),
+        fullName: cleanValue(row.full_name),
+        phoneNumber: cleanValue(row.phone_number),
+        gender: cleanValue(row.gender),
+        city: cleanValue(row.city)
+      }));
+    },
+    async getAllRegistrations() {
+      const result = await pool.query(
+        `
+          SELECT submitted_at, campaign_name, full_name, phone_number, email, gender, city, prayer_request
+          FROM ${registrationTableName}
+          ORDER BY submitted_at ASC, id ASC
+        `
+      );
+
+      return result.rows.map((row) => ({
+        submittedAt: row.submitted_at instanceof Date ? row.submitted_at.toISOString() : cleanValue(row.submitted_at),
+        campaignName: cleanValue(row.campaign_name),
+        fullName: cleanValue(row.full_name),
+        phoneNumber: cleanValue(row.phone_number),
+        email: cleanValue(row.email),
+        gender: cleanValue(row.gender),
+        city: cleanValue(row.city),
+        prayerRequest: cleanValue(row.prayer_request)
+      }));
+    }
+  };
+}
+
+function createPgMemDatabase() {
+  const memoryDb = newDb({
+    autoCreateForeignKeyIndices: true
+  });
+  const adapter = memoryDb.adapters.createPg();
+  const pool = new adapter.Pool();
+
+  return {
+    mode: 'pg-mem',
+    async initialize() {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS ${registrationTableName} (
+          id BIGSERIAL PRIMARY KEY,
+          submitted_at TIMESTAMPTZ NOT NULL,
+          campaign_name TEXT NOT NULL,
+          full_name TEXT NOT NULL,
+          phone_number TEXT NOT NULL,
+          email TEXT NOT NULL DEFAULT '',
+          gender TEXT NOT NULL DEFAULT '',
+          city TEXT NOT NULL,
+          prayer_request TEXT NOT NULL DEFAULT ''
+        )
+      `);
+    },
+    async saveRegistration(row) {
+      await createPostgresDatabaseAdapter(pool).saveRegistration(row);
+    },
+    async getRegistrationCount() {
+      return createPostgresDatabaseAdapter(pool).getRegistrationCount();
+    },
+    async getLatestRegistrations(limit) {
+      return createPostgresDatabaseAdapter(pool).getLatestRegistrations(limit);
+    },
+    async getAllRegistrations() {
+      return createPostgresDatabaseAdapter(pool).getAllRegistrations();
+    }
+  };
+}
+
+function createPostgresDatabaseAdapter(pool) {
+  return {
+    async saveRegistration(row) {
+      await pool.query(
+        `
+          INSERT INTO ${registrationTableName} (
+            submitted_at,
+            campaign_name,
+            full_name,
+            phone_number,
+            email,
+            gender,
+            city,
+            prayer_request
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `,
+        [
+          row.submittedAt,
+          row.campaignName,
+          row.fullName,
+          row.phoneNumber,
+          row.email,
+          row.gender,
+          row.city,
+          row.prayerRequest
+        ]
+      );
+    },
+    async getRegistrationCount() {
+      const result = await pool.query(`SELECT COUNT(*)::int AS count FROM ${registrationTableName}`);
+      return Number(result.rows[0]?.count || 0);
+    },
+    async getLatestRegistrations(limit) {
+      const result = await pool.query(
+        `
+          SELECT submitted_at, full_name, phone_number, gender, city
+          FROM ${registrationTableName}
+          ORDER BY submitted_at DESC, id DESC
+          LIMIT $1
+        `,
+        [limit]
+      );
+
+      return result.rows.map((row) => ({
+        submittedAt: row.submitted_at instanceof Date ? row.submitted_at.toISOString() : cleanValue(row.submitted_at),
+        fullName: cleanValue(row.full_name),
+        phoneNumber: cleanValue(row.phone_number),
+        gender: cleanValue(row.gender),
+        city: cleanValue(row.city)
+      }));
+    },
+    async getAllRegistrations() {
+      const result = await pool.query(
+        `
+          SELECT submitted_at, campaign_name, full_name, phone_number, email, gender, city, prayer_request
+          FROM ${registrationTableName}
+          ORDER BY submitted_at ASC, id ASC
+        `
+      );
+
+      return result.rows.map((row) => ({
+        submittedAt: row.submitted_at instanceof Date ? row.submitted_at.toISOString() : cleanValue(row.submitted_at),
+        campaignName: cleanValue(row.campaign_name),
+        fullName: cleanValue(row.full_name),
+        phoneNumber: cleanValue(row.phone_number),
+        email: cleanValue(row.email),
+        gender: cleanValue(row.gender),
+        city: cleanValue(row.city),
+        prayerRequest: cleanValue(row.prayer_request)
+      }));
+    }
+  };
+}
+
+function shouldUseSsl(connectionString) {
+  const explicitSsl = cleanValue(process.env.DATABASE_SSL).toLowerCase();
+
+  if (explicitSsl === 'true') {
+    return true;
+  }
+
+  if (explicitSsl === 'false') {
+    return false;
+  }
+
+  return connectionString.includes('sslmode=require');
+}
+
+function toExportRow(row) {
+  return {
+    'Submitted At': row.submittedAt,
+    'Campaign Name': row.campaignName,
+    'Full Name': row.fullName,
+    'Phone Number': row.phoneNumber,
+    Email: row.email,
+    Gender: row.gender,
+    'City / Area': row.city,
+    'Prayer Request / Notes': row.prayerRequest
+  };
 }
 
 function getPublicSiteUrl(request) {

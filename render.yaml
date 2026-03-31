@@ -2,15 +2,9 @@ services:
   - type: web
     name: seed-of-life-registration
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: npm run backend
-    disk:
-      name: registration-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: 24.13.1
-      - key: REGISTRATION_DATA_DIR
-        value: /var/data
